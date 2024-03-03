@@ -1,0 +1,115 @@
+/**
+ * @NotOnlyCurrentDoc
+ */
+var isScriptRunning = false;
+function onEdit() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var spreadsheet = SpreadsheetApp.getActive();
+  var activeSheetName = sheet.getName();
+  if (isScriptRunning) {
+    return;
+  }
+  isScriptRunning = true;
+  try {
+    if (activeSheetName === "Jobs Applied For") {
+      var columnToCheck = 11; // Column K
+      var startValue = 'start'; // Cell value that triggers the function
+      var range = sheet.getRange("K:K");
+      var values = range.getValues();
+
+      for (var i = 0; i < values.length; i++) {
+        if (values[i][0] === startValue) {
+          var rowValues = sheet.getRange("A"+ (i+1)+":C" + (i+1)).getValues()[0];
+          var newDocumentName = "CoverLetter" + "_" + rowValues[2].replace(/\s/g, '').substr(0, 10) + "_" + rowValues[1].replace(/\s/g, '').substr(0, 10) + "_" + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "MMddYY");
+          var templateFileId = "1drhpxc9JBwrimzfVOPhEqSfUreXRPQ1EKhw5zDnAxNo";
+          createNewDocument(templateFileId, newDocumentName, rowValues, sheet, i+1);
+        }
+      }
+      var range = sheet.getRange("L:L");
+      var values = range.getValues();
+
+      for (var i = 0; i < values.length; i++) {
+        if (values[i][0] === startValue) {
+          var rowValues = sheet.getRange("A"+ (i+1)+":C" + (i+1)).getValues()[0];
+          var newDocumentName = "Resume" + "_" + rowValues[2] + "_" + rowValues[1] + "_" + Utilities.formatDate(rowValues[0], Session.getScriptTimeZone(), "MM/dd/YY");
+          var templateFileId = "1mUZpZMwGBkbjrXSTeTOU8zLV8L3BJxVfhtmAyClaB28";
+          var newDoc = DriveApp.getFileById(templateFileId).makeCopy(newDocumentName);
+          var newDocId = newDoc.getId();
+          var documentLink = "https://docs.google.com/document/d/" + newDocId + "/edit";
+          sheet.getRange(i+1, 12).setValue(documentLink);
+          SpreadsheetApp.getActiveSpreadsheet().toast("New document created: " + newDocumentName, "Success");
+        }
+      }
+    }
+
+    if (activeSheetName === "Employee Connections") {
+      var columnToCheck = 10; // Column J
+      var startValue = 'start'; // Cell value that triggers the function
+      var range = sheet.getRange("J:J");
+      var values = range.getValues();
+
+      for (var i = 0; i < values.length; i++) {
+        if (values[i][0] === startValue) {
+          var rowValues = sheet.getRange("A"+ (i+1)+":F" + (i+1)).getValues()[0];
+          var newDocumentName = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "MM/dd") + "_ConnectionConvo_" + rowValues[0];
+          var templateFileId = "1E-vA6EhfRnjcpHs7F8wp8Ue8l0GRkEllHsYL-bPzwTk";
+          createNewDocument(templateFileId, newDocumentName, rowValues, sheet, i+1)
+        }
+      }
+    }
+  } finally {
+    // Reset the flag when the script execution is done
+    isScriptRunning = false;
+  }
+}
+
+function createNewDocument(templateFileId, newDocumentName, rowValues, sheet, rowIndex) {
+  var newDoc = DriveApp.getFileById(templateFileId).makeCopy(newDocumentName);
+  var newDocId = newDoc.getId();
+
+  DriveApp.getFileById(newDocId).moveTo(DriveApp.getFolderById("1F540i7fI2bgdg_qCNBpLHASNUore8wd4"));
+  
+  var doc = DocumentApp.openById(newDocId);
+  var body = doc.getBody();
+  
+  body.replaceText("<COMPANY>", rowValues[2]);
+  body.replaceText("<DATE>", Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "MM/dd/yyyy"));
+
+
+  if (rowValues[5]) {
+    body.replaceText("<NAME>", rowValues[0]);
+    body.replaceText("<LINKEDIN>", rowValues[5]);
+  }
+  else{
+    var jobRewrite = SpreadsheetApp.getUi().prompt('Rewrite Job ('+rowValues[1]+')').getResponseText();
+    if (jobRewrite.toLowerCase() == "skip"){
+      DriveApp.getFileById(newDocId).setTrashed(true);
+      return;
+    }
+    if (jobRewrite != ""){
+      body.replaceText("<JOB>", jobRewrite);
+    }
+    else{
+      body.replaceText("<JOB>", rowValues[1]);
+    }
+    
+    var companyGenre = SpreadsheetApp.getUi().prompt('Enter the Company Subsection').getResponseText();
+    
+    if (companyGenre != ""){
+      body.replaceText("<COMPANY SUBSECTION>", "'s " + companyGenre);
+    }
+
+    var companyGenre = SpreadsheetApp.getUi().prompt('Enter the Company Genre').getResponseText();
+    body.replaceText("<COMPANY GENRE>", companyGenre);
+  }
+  doc.saveAndClose();
+  
+  var documentLink = "https://docs.google.com/document/d/" + newDocId + "/edit";
+  if (rowValues[5]){
+  sheet.getRange(rowIndex, 10).setValue(documentLink);
+  }
+  else{
+    sheet.getRange(rowIndex, 11).setValue(documentLink);
+  }
+  SpreadsheetApp.getActiveSpreadsheet().toast("New document created: " + newDocumentName, "Success");
+}
