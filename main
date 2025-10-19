@@ -32,7 +32,7 @@ function onEdit() {
         if (values[i][0] === startValue) {
           var rowValues = sheet.getRange("A"+ (i+1)+":C" + (i+1)).getValues()[0];
           var newDocumentName = "Resume" + "_" + rowValues[2] + "_" + rowValues[1] + "_" + Utilities.formatDate(rowValues[0], Session.getScriptTimeZone(), "MM/dd/YY");
-          var templateFileId = "1mUZpZMwGBkbjrXSTeTOU8zLV8L3BJxVfhtmAyClaB28";
+          var templateFileId = "<insert file id>";
           var newDoc = DriveApp.getFileById(templateFileId).makeCopy(newDocumentName);
           var newDocId = newDoc.getId();
           var documentLink = "https://docs.google.com/document/d/" + newDocId + "/edit";
@@ -52,7 +52,7 @@ function onEdit() {
         if (values[i][0] === startValue) {
           var rowValues = sheet.getRange("A"+ (i+1)+":F" + (i+1)).getValues()[0];
           var newDocumentName = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "MM/dd") + "_ConnectionConvo_" + rowValues[0];
-          var templateFileId = "1E-vA6EhfRnjcpHs7F8wp8Ue8l0GRkEllHsYL-bPzwTk";
+          var templateFileId = "<insert file id>";
           createNewDocument(templateFileId, newDocumentName, rowValues, sheet, i+1)
         }
       }
@@ -67,7 +67,7 @@ function createNewDocument(templateFileId, newDocumentName, rowValues, sheet, ro
   var newDoc = DriveApp.getFileById(templateFileId).makeCopy(newDocumentName);
   var newDocId = newDoc.getId();
 
-  DriveApp.getFileById(newDocId).moveTo(DriveApp.getFolderById("1F540i7fI2bgdg_qCNBpLHASNUore8wd4"));
+  DriveApp.getFileById(newDocId).moveTo(DriveApp.getFolderById("<insert folder id>"));
   
   var doc = DocumentApp.openById(newDocId);
   var body = doc.getBody();
